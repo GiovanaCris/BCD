@@ -1,0 +1,70 @@
+Schema SQL
+
+CREATE DATABASE bibliotecaGi;
+-- drop database bibliotecaGi;
+
+CREATE TABLE Usuario(
+	id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+  	matricula INT NOT NULL,
+  	nome VARCHAR(100),
+  	email VARCHAR(100)
+);
+
+CREATE TABLE Livro(
+	id_livro INT AUTO_INCREMENT PRIMARY KEY,
+  	codigo_livro INT  NOT NULL,
+  	titulo 	VARCHAR(50),
+  	ano_publicacao YEAR,
+  	autor VARCHAR(50)
+);
+
+CREATE TABLE Emprestimo(
+	id_emprestimo INT AUTO_INCREMENT PRIMARY KEY,
+  	data_emprestimo DATE,
+  	data_devolucao DATE,
+  	id_livro INT,
+  	id_usuario INT,
+  	FOREIGN KEY (id_livro) REFERENCES Livro(id_livro),
+  	FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+);
+
+
+
+Query
+
+INSERT INTO Usuario(matricula, nome, email)
+VALUES
+('1234', 'Giovana', 'gigi@dwh.com'),
+('5678', 'Nic', 'nic@djl.com');
+
+INSERT INTO Livro(codigo_livro, titulo, ano_publicacao, autor)
+VALUES
+('3454', 'A vida invisivel de addie larue', '2023', 'cwcdee'),
+('3983', 'É assim que acaba', '2021', 'feff');
+
+INSERT INTO Emprestimo(data_emprestimo, data_devolucao, id_livro, id_usuario)
+VALUES
+('2025-04-30', NULL, 2, 1),
+('2023-03-22', '2023-04-12', 1, 2);
+
+SELECT * FROM Usuario;
+SELECT * FROM Livro;
+
+-- Se tiver algum campo de data_devolução NULL
+SELECT -- Filtra os usuários que ainda não devolveram o livro e o nome do livro
+  Livro.titulo AS titulo_livro,
+  Usuario.nome AS nome_usuario
+FROM Emprestimo
+JOIN Livro ON Emprestimo.id_livro = Livro.id_livro
+JOIN Usuario ON Emprestimo.id_usuario = Usuario.id_usuario
+WHERE Emprestimo.data_devolucao IS NULL;
+
+-- SELECT -- printa o nome do livro e do autor, não apenas a id
+--   Emprestimo.id_emprestimo,
+--   Emprestimo.data_emprestimo,
+--   Emprestimo.data_devolucao,
+--   Usuario.nome AS nome_usuario,
+--   Livro.titulo AS titulo_livro
+-- FROM Emprestimo
+-- JOIN Usuario ON Emprestimo.id_usuario = Usuario.id_usuario
+-- JOIN Livro ON Emprestimo.id_livro = Livro.id_livro;
