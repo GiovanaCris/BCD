@@ -175,17 +175,54 @@ DELETE FROM Usuario WHERE id = 411;
 SELECT * FROM UsuarioExcluido;
 
 -- Exercício 2 Crie uma trigger que preenche data_emprestimo com a data atual se ela vier nula.
-INSERT INTO Emprestimo (usuario_id, livro_id) VALUES 
-(412, 311),
+CREATE TABLE emprestimo_data(
+	id INT,
+    usuario INT,
+    livro INT,
+    data_emprestimo DATE,
+    data_devolucao DATE
+);
 
 DELIMITER //
 	CREATE TRIGGER EmprestimoAtual
-	BEFORE UPDATE ON Emprestimo
+	BEFORE INSERT ON Emprestimo
     FOR EACH ROW
     BEGIN
-		SET data_emprestimo = CURDATE();
-    END;
+		IF NEW.data_emprestimo IS NULL THEN
+			SET NEW.data_emprestimo = CURDATE();
+    END IF;
+END;
 //
 DELIMITER ;
 
+INSERT Emprestimo (USUARIO_ID, LIVRO_ID, DATA_EMPRESTIMO, DATA_DEVOLUCAO_LIMITE, DATA_DEVOLUCAO) 
+VALUES (410, 306, NULL, CURDATE(), CURDATE());
 SELECT * FROM Emprestimo;
+
+SELECT * FROM Emprestimo;
+
+-- Exercício 03 Crie uma trigger para registrar toda vez que o nome de um livro for alterado.
+CREATE TABLE historico_livros(
+	id_livro INT primary key auto_increment,
+    isbn VARCHAR(50),
+    nome_antigo VARCHAR(100),
+    nome_novo VARCHAR(20)
+);
+
+DELIMITER //
+CREATE TRIGGER atualizar_livro
+BEFORE UPDATE ON Livro
+FOR EACH ROW
+BEGIN
+	 IF NEW.titulo !=  OLD.titulo THEN
+        INSERT INTO historico_livros (id_livro, isbn, nome_antigo, nome_novo)
+        VALUES (OLD.id, OLD.isbn, OLD.titulo, NEW.titulo);
+    END IF;
+END;
+//
+DELIMITER ;
+
+UPDATE Livro SET titulo = "Rapunzel" WHERE id = 303;
+
+SELECT * FROM Livro;
+SELECT * FROM historico_livros;
