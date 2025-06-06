@@ -175,14 +175,6 @@ DELETE FROM Usuario WHERE id = 411;
 SELECT * FROM UsuarioExcluido;
 
 -- Exercício 2 Crie uma trigger que preenche data_emprestimo com a data atual se ela vier nula.
-CREATE TABLE emprestimo_data(
-	id INT,
-    usuario INT,
-    livro INT,
-    data_emprestimo DATE,
-    data_devolucao DATE
-);
-
 DELIMITER //
 	CREATE TRIGGER EmprestimoAtual
 	BEFORE INSERT ON Emprestimo
@@ -190,39 +182,87 @@ DELIMITER //
     BEGIN
 		IF NEW.data_emprestimo IS NULL THEN
 			SET NEW.data_emprestimo = CURDATE();
-    END IF;
-END;
+		END IF;
+    END;
 //
 DELIMITER ;
 
-INSERT Emprestimo (USUARIO_ID, LIVRO_ID, DATA_EMPRESTIMO, DATA_DEVOLUCAO_LIMITE, DATA_DEVOLUCAO) 
-VALUES (410, 306, NULL, CURDATE(), CURDATE());
-SELECT * FROM Emprestimo;
+INSERT INTO Emprestimo (usuario_id, livro_id, data_emprestimo, data_devolucao_limite, data_devolucao)
+VALUES 
+(410, 310, null ,'2024-01-20', '2024-01-18');
 
 SELECT * FROM Emprestimo;
 
--- Exercício 03 Crie uma trigger para registrar toda vez que o nome de um livro for alterado.
-CREATE TABLE historico_livros(
-	id_livro INT primary key auto_increment,
-    isbn VARCHAR(50),
-    nome_antigo VARCHAR(100),
-    nome_novo VARCHAR(20)
+-- Exercício 3 Crie uma trigger para registrar toda vez que o nome de um livro for alterado
+CREATE TABLE LogTituloLivro(
+	id_livro INT,
+    titulo_antigo VARCHAR(200),
+    titulo_novo VARCHAR(200),
+    data_alteracao DATE
 );
 
 DELIMITER //
-CREATE TRIGGER atualizar_livro
+CREATE TRIGGER trg_LogTituloLivro
 BEFORE UPDATE ON Livro
 FOR EACH ROW
-BEGIN
-	 IF NEW.titulo !=  OLD.titulo THEN
-        INSERT INTO historico_livros (id_livro, isbn, nome_antigo, nome_novo)
-        VALUES (OLD.id, OLD.isbn, OLD.titulo, NEW.titulo);
-    END IF;
+BEGIN 
+	IF NEW.titulo != OLD.titulo THEN
+		INSERT INTO LogTituloLivro (id_livro, titulo_antigo, titulo_novo, data_alteracao)
+		VALUES
+		(OLD.id, OLD.titulo, NEW.titulo, NOW());
+	END IF;
 END;
 //
 DELIMITER ;
 
-UPDATE Livro SET titulo = "Rapunzel" WHERE id = 303;
+UPDATE Livro SET titulo = 'Enrolados' WHERE id = 310;
 
+SELECT * FROM logTituloLivro;
+
+-- Exercício 4 Crie uma trigger que registre todo novo usuário em uma tabela de log
+CREATE TABLE LogNovoUsuario(
+	id_usuario INT,
+    nome VARCHAR(100),
+    data_criacao DATE
+);
+
+DELIMITER //
+CREATE TRIGGER trg_LogNovoUsuario
+AFTER INSERT ON Usuario
+FOR EACH ROW
+BEGIN
+	INSERT INTO LogNovoUsuario (id_usuario, nome, data_criacao)
+    VALUES (NEW.id, NEW.nome, NEW.data_cadastro);
+END;
+
+INSERT INTO Usuario (nome, numero_identificacao, email, data_cadastro, nivel_associacao) VALUES 
+('Marcia', 'USR015', 'marcia@email.com', '2023-01-10', 'regular');
+
+//
+DELIMITER ;
+
+SELECT * FROM LogNovoUsuario;
+SELECT * FROM Usuario;
+
+-- Exercicio 5 Crie uma trigger que grave o título e o ISBN de todo novo livro inserido
+CREATE TABLE LogInsercaoLivro(
+    titulo VARCHAR(200),
+    isbn VARCHAR (20)
+);
+
+DELIMITER //
+CREATE TRIGGER trg_LogInsercaoLivro
+AFTER INSERT ON Livro
+FOR EACH ROW
+BEGIN
+	INSERT INTO LogInsercaoLivro (titulo, isbn)
+    VALUES (NEW.titulo, NEW.isbn);
+END;
+//
+DELIMITER ;
+
+INSERT INTO Livro (titulo, isbn, descricao) VALUES 
+('A sereia sem dons', '42235643', 'Livro divonico');
+
+SELECT * FROM LogInsercaoLivro;
 SELECT * FROM Livro;
-SELECT * FROM historico_livros;
